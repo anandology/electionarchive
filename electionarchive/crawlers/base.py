@@ -110,9 +110,9 @@ class BaseCrawler:
         self.files_dir = os.path.join(root, "files")
         self.data_dir = os.path.join(root, "data")
         
-        #self.makedirs(self.cache_dir)
-        #self.makedirs(self.files_dir)
-        #self.makedirs(self.data_dir)
+        self.makedirs(self.cache_dir)
+        self.makedirs(self.files_dir)
+        self.makedirs(self.data_dir)
         
         self.opener = urllib2.build_opener(
             CacheHandler(self.cache_dir), 
