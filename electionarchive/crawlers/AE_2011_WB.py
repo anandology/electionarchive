@@ -136,12 +136,15 @@ class Crawler(BaseCrawler):
         
         post_links = [a for a in soup.findAll("a") if a['href'].startswith("javascript:__doPostBack")]
         
-        assert post_links[0]['href'] == "javascript:__doPostBack('ctl00$ContentPlaceHolder1$dlsCr$ctl00$lnkbtnDownload','')"
-        assert post_links[1]['href'] == "javascript:__doPostBack('ctl00$ContentPlaceHolder1$dlsSC$ctl00$lnkbtnDownload','')"
-        assert len(post_links) == 2
+        try:
+            assert post_links[0]['href'] == "javascript:__doPostBack('ctl00$ContentPlaceHolder1$dlsCr$ctl00$lnkbtnDownload','')"
+            assert post_links[1]['href'] == "javascript:__doPostBack('ctl00$ContentPlaceHolder1$dlsSC$ctl00$lnkbtnDownload','')"
+            assert len(post_links) == 2
         
-        self._download_affidavit(AffidavitsID, "CR", formdata, "ctl00$ContentPlaceHolder1$dlsCr$ctl00$lnkbtnDownload")
-        self._download_affidavit(AffidavitsID, "SC", formdata, "ctl00$ContentPlaceHolder1$dlsSC$ctl00$lnkbtnDownload")
+            self._download_affidavit(AffidavitsID, "CR", formdata, "ctl00$ContentPlaceHolder1$dlsCr$ctl00$lnkbtnDownload")
+            self._download_affidavit(AffidavitsID, "SC", formdata, "ctl00$ContentPlaceHolder1$dlsSC$ctl00$lnkbtnDownload")
+        except Exception:
+            logger.error("failed to download affidavits", exe_info=True)
         
     @disk_memoize("files/%(AffidavitsID)s-%(suffix)s.pdf")
     def _download_affidavit(self, AffidavitsID, suffix, formdata, target):
