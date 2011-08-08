@@ -76,6 +76,10 @@ class Disk:
     def write(self, path, content):
         if path.endswith(".json"):
             content = simplejson.dumps(content, indent=4)
+            
+        dirname = os.path.dirname(path)
+        if not os.path.exists(dirname):
+            os.mkdirs(dirname)
         
         logger.info("saving %s", path)
         with open(path, 'w') as f:
@@ -106,13 +110,16 @@ class BaseCrawler:
         self.files_dir = os.path.join(root, "files")
         self.data_dir = os.path.join(root, "data")
         
-        self.makedirs(self.cache_dir)
-        self.makedirs(self.files_dir)
-        self.makedirs(self.data_dir)
+        #self.makedirs(self.cache_dir)
+        #self.makedirs(self.files_dir)
+        #self.makedirs(self.data_dir)
         
         self.opener = urllib2.build_opener(
             CacheHandler(self.cache_dir), 
             ThrottlingProcessor(2))
+            
+        self.post_opener = urllib2.build_opener(
+            ThrottlingProcessor(5))
             
     def makedirs(self, path):
         if not os.path.exists(path):
@@ -125,6 +132,13 @@ class BaseCrawler:
         logger.info("GET %s", url)
         return self.opener.open(url).read()
         
+    def post(self, url, params):
+        if isinstance(params, dict):
+            params = urllib.urlencode(params)
+
+        logger.info("POST %s", url)
+        return self.post_opener.open(url, params).read()
+        
     def get_soup(self, url):
         html = self.get(url)
         return BeautifulSoup(html)
@@ -136,4 +150,14 @@ class BaseCrawler:
     
     def save_json(self, path, data):
         self.save(path, simplejson.dumps(data, indent=4))
+    
+    def download(self, url, method=None, data=None, path=None):
+        path = path or url.split("/")[-1]
+        self._download(url, method=method, data=data, path=path)
         
+    @disk_memoize("files/%(path)s")
+    def _download(self, url, method, data, path):
+        if method.upper() == "GET":
+            return self.get(url, data)
+        else:
+            return self.post(url, data)
