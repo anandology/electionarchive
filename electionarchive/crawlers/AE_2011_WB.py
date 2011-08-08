@@ -34,6 +34,7 @@ class Crawler(BaseCrawler):
         return d
         
     def download_all(self):
+        self.download_links()
         for c in self.get_all_candidates():
             logger.info("downloading affidavits of %s (%s)" % (c['name'], c['id']))
             self.download_affidavits(c['affidavit_id'])
@@ -148,6 +149,30 @@ class Crawler(BaseCrawler):
         data = dict(formdata)
         data['__EVENTTARGET'] = target
         return self.post(url, data)
+        
+    def download_links(self):
+        for link in self.get_links():
+            self.download(link['url'], path=link['filename'])
+        
+    @disk_memoize("data/links.json")
+    def get_links(self):
+        return [{"title": title, "filename": filename, "url": url} 
+                for title, filename, url in self._get_links()
+                if url.endswith(".pdf") or url.endswith(".jpg")]
+        
+    def _get_links(self):
+        url = "http://ceowestbengal.nic.in/FirstHyperLink.asp?m_menu_id=142"        
+        soup = self.get_soup(url)
+        links = soup.findAll("a")
+        
+        for a in links:
+            href = a.get('href', '')
+            if href.startswith("javascript:show_window"):
+                print a
+                filename = re.sub(r"javascript:show_window\('./(mis_pdf/.*)'\)", r'\1', href)
+                url = "http://ceowestbengal.nic.in/" + filename
+                title = self.get_text(a)
+                yield title, filename, url
 
 def main():
     FORMAT = "%(asctime)s [%(name)s] [%(levelname)s] %(message)s"
@@ -157,6 +182,7 @@ def main():
     # crawler.get_candidates(1)    
     #print crawler.download_affidavits(76)
     crawler.download_all()
+    #print crawler.get_links()
         
 if __name__ == '__main__':
     main()

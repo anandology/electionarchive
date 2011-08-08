@@ -79,7 +79,7 @@ class Disk:
             
         dirname = os.path.dirname(path)
         if not os.path.exists(dirname):
-            os.mkdirs(dirname)
+            os.makedirs(dirname)
         
         logger.info("saving %s", path)
         with open(path, 'w') as f:
@@ -151,7 +151,7 @@ class BaseCrawler:
     def save_json(self, path, data):
         self.save(path, simplejson.dumps(data, indent=4))
     
-    def download(self, url, method=None, data=None, path=None):
+    def download(self, url, method="GET", data=None, path=None):
         path = path or url.split("/")[-1]
         self._download(url, method=method, data=data, path=path)
         
@@ -161,3 +161,8 @@ class BaseCrawler:
             return self.get(url, data)
         else:
             return self.post(url, data)
+            
+    def get_text(self, e=None):
+        """Returns content of BeautifulSoup element as text."""
+        return ''.join([c for c in e.recursiveChildGenerator() if isinstance(c, unicode)])
+    
