@@ -20,7 +20,7 @@ $for c in constituency.candidates:
             <ul>
             $for a in c.affidavits:
                 <li>
-                    <a href="http://www.archive.org/download/$eid/${eid}.zip/$a.filename">$a.name</a>
+                    <a href="http://www.archive.org/download/$eid/${eid}.zip/$eid/$a.filename">$a.name</a>
                     $if "url" in a:
                         - <a href="$a.url">original</a>
                 </li>
