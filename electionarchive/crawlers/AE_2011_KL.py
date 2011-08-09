@@ -37,6 +37,8 @@ class Crawler(BaseCrawler):
         
     def download_files(self):
         for filename, url in self.get_files_to_download():
+            # download adds files/ to the path. Stripping that off to balance.
+            filename = filename[len("files/"):]
             self.download(url, path=filename)
     
     def get_files_to_download(self):
