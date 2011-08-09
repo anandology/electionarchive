@@ -124,7 +124,7 @@ class BaseCrawler:
             ThrottlingProcessor(2))
             
         self.post_opener = urllib2.build_opener(
-            ThrottlingProcessor(5))
+            ThrottlingProcessor(2))
             
     def makedirs(self, path):
         if not os.path.exists(path):
