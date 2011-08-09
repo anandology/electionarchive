@@ -69,11 +69,15 @@ class index:
 class election:
     def GET(self, eid):
         election = Election.get(eid)
+        if not election:
+            raise web.notfound()
         return render.site(render.election(election))
         
 class constituency:
     def GET(self, eid, cid):
         election = Election.get(eid)
+        if not election:
+            raise web.notfound()
         constituency = election.get_constituency(cid)
         return render.site(render.constituency(eid, constituency))
         
