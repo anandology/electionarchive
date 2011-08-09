@@ -46,7 +46,7 @@ class Crawler(BaseCrawler):
         for cons in d['constituencies']:
             for c in cons['candidates']:
                 for a in c['affidavits']:
-                    yield c['filename'], c['url']
+                    yield a['filename'], a['url']
     
     @disk_memoize("data/districts.json")
     def get_districts(self):
