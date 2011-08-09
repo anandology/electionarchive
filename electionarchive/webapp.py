@@ -2,8 +2,8 @@
 """
 
 import web
-import couchdb
 import os
+import simplejson
 
 urls = (
     "/", "index",
@@ -11,8 +11,6 @@ urls = (
     "/([^/]*)/C(\d+)", "constituency",
 )
 app = web.application(urls, globals())
-db = couchdb.Database("http://127.0.0.1:5984/electionarchive")
-
 render = web.template.render(os.path.join(os.path.dirname(__file__), "templates"))
 
 def first(seq):
@@ -53,13 +51,14 @@ class Election:
     def list():
         """Returns ids of all available elections.
         """
-        return [row.id for row in db.view("_all_docs", endkey="_")]
+        return [os.path.splitext(f)[0] for f in os.listdir("db") if f.endswith(".json")]
         
     @staticmethod
     def get(id):
         """Returns the election object with given id.
         """
-        data = db.get(id)
+        json = open("db/%s.json" %id).read()
+        data = simplejson.loads(json)
         return data and Election(data)
     
 class index:
