@@ -163,7 +163,10 @@ class BaseCrawler:
     
     def download(self, url, method="GET", data=None, path=None):
         path = path or url.split("/")[-1]
-        self._download(url, method=method, data=data, path=path)
+        try:
+            self._download(url, method=method, data=data, path=path)
+        except urllib2.HTTPError:
+            logger.error("failed to download %s", path, exc_info=True)
         
     @disk_memoize("files/%(path)s")
     def _download(self, url, method, data, path):
