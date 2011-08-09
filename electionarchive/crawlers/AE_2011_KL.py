@@ -19,6 +19,7 @@ class Crawler(BaseCrawler):
         """Returns the data in data.json format.
         """
         d = {
+            "_id": "AE-2011-KL",
             "state": "Kerala",
             "election_type": "assembly",
             "year": "2011",
@@ -28,16 +29,14 @@ class Crawler(BaseCrawler):
         
         for dist in self.get_districts():
             for c in dist['constituencies']:
-                c['candidates'] = self.get_candidates(c['number'])
+                c['candidates'] = self.get_candidates(c['id'], dist['id'])
                 c['district'] = dist['name']
-                c['district_id'] = dist['number']
+                c['district_id'] = dist['id']
                 d['constituencies'].append(c)
         return d
         
     def download_files(self):
-        d = self.get_data()
-        for cons in d['constituencies']:
-            for c in cons['candidates']:
+        pass
     
     def get_files_to_download(self):
         """Returns an iterator over (filename, url) for all downloadable urls.
@@ -58,20 +57,20 @@ class Crawler(BaseCrawler):
         districts = []
         for row in rows:
             cells  = row.findAll("td")
-            number = int(cells[0].text)
+            number = cells[0].text
             
             a = cells[1].find("a")
             name = a.text
             constituencies = self.get_constituencies(number, a['href'])
             districts.append({
-                "number": number,
+                "id": number,
                 "name": name, 
                 "constituencies": constituencies
             })
         return districts
         
-    @disk_memoize("data/district_%(number)s.json")
-    def get_constituencies(self, number, district_url):
+    @disk_memoize("data/district_%(dist_id)s.json")
+    def get_constituencies(self, dist_id, district_url):
         #url = "http://www.ceo.kerala.gov.in/%s.html" % district.lower()
         soup = self.get_soup(district_url)
         
@@ -88,31 +87,19 @@ class Crawler(BaseCrawler):
         
         def parse_constituency(name):
             num, name = name.split(None, 1)
-            return {"number": int(num), "name": name}
+            return {"id": num, "name": name}
             
         # constituency name is the second last
         values = [row.findAll("td")[-2].text for row in rows[:count]]
         return [parse_constituency(v) for v in values]
         
-    def read_info(self):
-        return simplejson.loads(open("kerala/index.json").read())
-        
-    @disk_memoize("data/candidates_%(cnum)s.json")
-    def get_candidates(self, cnum):
+    @disk_memoize("data/candidates_%(cid)s.json")
+    def get_candidates(self, cid, dist_id):
         """Returns the candidates info from a constituency.
         """
-        logger.info("get_candidates %d", cnum)
-        def get_distict(cnum):
-            for d in info['districts']:
-                for c in d['constituencies']:
-                    if c['number'] == cnum:
-                        return d
-        
-        info = self.read_info()
-        district = get_distict(cnum)
-        
+        logger.info("get_candidates %s", cid)
         url = "http://www.ceo.kerala.gov.in/affidavit/partsListAjax.html"
-        json = self.get(url, {"distNo": district['number'], 'lacNo': cnum})
+        json = self.get(url, {"distNo": dist_id, 'lacNo': cid})
         # convert to UTF-8 and ignore errors
         # One particular page was failing with unicode code. This conversion takes care of that.
         json = json.decode('utf-8', 'ignore')
@@ -121,12 +108,12 @@ class Crawler(BaseCrawler):
         def parse_candidate(c):
             a = BeautifulSoup.BeautifulSoup(c[3]).find("a")
             return {
-                "number": int(c[0]),
+                "id": c[0],
                 "name": c[1],
                 "party": c[2],
                 "affidavits": [{
                     "url": a['href'],
-                    "filename": "files/" + os.path.basename(a['href']),
+                    "filename": "files/" + a['href'][len("http://"):].replace(":80/", "/"),
                     "name": "affidavit"
                 }]
             }
