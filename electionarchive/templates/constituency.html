@@ -1,0 +1,27 @@
+$def with (eid, constituency)
+
+<h2>$constituency.name</h2>
+
+<table>
+$for c in constituency.candidates:
+    <tr>
+        <td>$c.id</td>
+        <td>$c.name</td>
+        <td>$c.get("party", "-")</td>
+        <td>
+            <ul>
+            $for a in c.affidavits:
+                <li>
+                    <a href="http://www.archive.org/download/$eid/${eid}.zip/$a.filename">$a.name</a>
+                    $if "url" in a:
+                        - <a href="$a.url">original</a>
+                </li>
+            </ul>
+        </td>
+        <td>
+            <ul>
+            $if "download_url" in c:
+                <li><a href="$c.download_url">Original Affidavit download page</a></li>
+            </ul>
+        </td>
+</table>

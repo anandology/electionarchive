@@ -1,0 +1,19 @@
+$def with (election)
+
+<h2>$election.name</h2>
+
+<h3>Constituencies</h3>
+
+<table>
+    <tr>
+        <th>ID</th>
+        <th>District</th>
+        <th>Constituency</th>
+    </tr>
+$for c in election.constituencies:
+    <tr>
+        <td>$c.id</td>
+        <td>$c.get("district", "-")</td>
+        <td><a href="$election.id/C$c.id">$c.name</td>
+    </tr>
+</table>
