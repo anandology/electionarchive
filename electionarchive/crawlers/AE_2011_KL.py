@@ -42,6 +42,7 @@ class Crawler(BaseCrawler):
     def get_files_to_download(self):
         """Returns an iterator over (filename, url) for all downloadable urls.
         """
+        d = self.get_data()
         for cons in d['constituencies']:
             for c in cons['candidates']:
                 for a in c['affidavits']:
