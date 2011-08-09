@@ -11,7 +11,7 @@ $def with (election)
         <th>Constituency</th>
     </tr>
 $for c in election.constituencies:
-    <tr>
+    <tr class="$loop.parity">
         <td>$c.id</td>
         <td>$c.get("district", "-")</td>
         <td><a href="$election.id/C$c.id">$c.name</td>

@@ -1,10 +1,18 @@
 $def with (eid, constituency)
 
-<h2>$constituency.name</h2>
+<h2><a href="/$eid">$eid</a> / $constituency.name</h2>
 
 <table>
-$for c in constituency.candidates:
     <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Party</th>
+        <th>Affidavits</th>
+        <th>Other Links</th>
+    </tr>
+    
+$for c in constituency.candidates:
+    <tr class="$loop.parity">
         <td>$c.id</td>
         <td>$c.name</td>
         <td>$c.get("party", "-")</td>

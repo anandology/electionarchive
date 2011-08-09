@@ -2,16 +2,78 @@ $def with (page)
 <html>
 <head>
     <title>Election Archive</title>
-    <style type="text/css">
+    <link rel="stylesheet" type="text/css" href="/static/style.css"/>
     
+    <style type="text/css">
+        body {
+          background-color: white;
+          font: 13.34px helvetica, arial, clean, sans-serif;
+          *font-size: small;
+        }
+        #wrapper {
+            margin: 1em auto;
+            width: 60em;
+            background: #fff;
+            padding: 5px;
+            text-align: left;
+        }
+                
+        .header {
+            border-bottom: 2px solid #DDDDDD;
+            margin-bottom: 20px;
+        }
+        
+        .footer {
+            margin-top: 20px;
+            border-top: 2px solid #DDDDDD;            
+        }
+        
+        .title a {
+            color: #0000AA;
+            margin: 10px;
+            text-decoration: none;
+            font-size: 1.3em;
+            font-weight: bold;
+        }
+        
+        .content {
+            margin: 10px;
+        }
+        
+        table {
+            border-collapse: collapse;
+            border: 2px solid #ddd;
+        }
+        
+        th {
+            text-align: left;
+            background: #ddd;
+        }
+        
+        td, th {
+            padding: 5px 10px;
+        }
+        
+        tr.even {
+            background: #eec;
+        }
+        
+        li {
+            line-height: 1.5em;
+        }
+        
     </style>
 </head>
 <body>
-    <div class="header">
-    <h1><a href="/">Election Archive</a></h1>
-    </div>
-    <div class="content">
-        $:page
+    <div id="wrapper">
+        <div class="header">
+            <div class="title"><a href="/">Election Archive</a></div>
+        </div>
+        <div class="content">
+            $:page
+        </div>
+        <div class="footer">
+        </div>
     </div>
 </body>
 </html>
