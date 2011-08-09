@@ -57,9 +57,11 @@ class Election:
     def get(id):
         """Returns the election object with given id.
         """
-        json = open("db/%s.json" %id).read()
-        data = simplejson.loads(json)
-        return data and Election(data)
+        filename = "db/%s.json" % id
+        if os.path.exists(filename):
+            json = open(filename).read()
+            data = simplejson.loads(json)
+            return data and Election(data)
     
 class index:
     def GET(self):
