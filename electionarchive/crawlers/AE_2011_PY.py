@@ -150,6 +150,8 @@ class Crawler(BaseCrawler):
 
     def download_all(self):
         for filename, url in self.get_downloadables():
+            # download adds files/ to the filename. removing here to balance it.
+            filename = filename[len("files/"):]
             self.download(url, path=filename)
 
 def main():
