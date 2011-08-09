@@ -9,7 +9,6 @@ from base import BaseCrawler, disk_memoize
 
 logger = logging.getLogger("crawler")
 
-
 class Crawler(BaseCrawler):
     url = "http://www.ceo.kerala.gov.in/affidavit.html"
 
@@ -29,7 +28,7 @@ class Crawler(BaseCrawler):
         
     def download_all(self):
         for c in self.get_all_candidates():
-            logger.info("downloading affidavits of %s (%s/%s)" % (c['name'], c['district_id'], c['id']))
+            logger.info("downloading affidavits of %s (%s/%s)" % (c['name'], c['constituency_id'], c['id']))
             self.download_affidavits(c['affidavit_id'])
             
         self.download_links()
@@ -47,6 +46,7 @@ class Crawler(BaseCrawler):
         d = self.get_data()
         for cons in d['constituencies']:
             for c in cons['candidates']:
+                c['constituency_id'] = cons['id']
                 yield c
         
     def get_links(self):
