@@ -18,6 +18,7 @@ class Crawler(BaseCrawler):
         """Returns the data in data.json format.
         """
         d = {
+            "_id": "AE-2011-WB",
             "state": "West Bengal",
             "election_type": "assembly",
             "year": "2011",
@@ -138,16 +139,39 @@ class Crawler(BaseCrawler):
         formdata = dict((i['name'], i['value']) for i in inputs)
         
         post_links = [a for a in soup.findAll("a") if a['href'].startswith("javascript:__doPostBack")]
+        for link in post_links:
+            suffix = self.get_suffix_from_jslink(link['href'])
+            target = link['href'].split("'")[1]
+            self._download_affidavit(AffidavitsID, suffix, formdata, target)
+            
+    def get_suffix_from_jslink(self, link, suffix_map={}):
+        """Returns file suffix from href.
         
-        try:
-            assert post_links[0]['href'] == "javascript:__doPostBack('ctl00$ContentPlaceHolder1$dlsCr$ctl00$lnkbtnDownload','')"
-            assert post_links[1]['href'] == "javascript:__doPostBack('ctl00$ContentPlaceHolder1$dlsSC$ctl00$lnkbtnDownload','')"
-            assert len(post_links) == 2
+        same hrefs:
         
-            self._download_affidavit(AffidavitsID, "CR", formdata, "ctl00$ContentPlaceHolder1$dlsCr$ctl00$lnkbtnDownload")
-            self._download_affidavit(AffidavitsID, "SC", formdata, "ctl00$ContentPlaceHolder1$dlsSC$ctl00$lnkbtnDownload")
-        except Exception:
-            logger.error("failed to download affidavits", exc_info=True)
+        javascript:__doPostBack('ctl00$ContentPlaceHolder1$dlsCr$ctl00$lnkbtnDownload','')
+        javascript:__doPostBack('ctl00$ContentPlaceHolder1$dlsSC$ctl00$lnkbtnDownload','')
+        javascript:__doPostBack('ctl00$ContentPlaceHolder1$dlsSC$ctl01$lnkbtnDownload','')
+        
+        suffixs for the above:
+        CR
+        SC
+        SC1
+        
+        When called with suffix_map {"CR": "X", "SC": "Y"}:
+        X
+        Y
+        Y1
+        """
+        match = re.search(r"ctl00\$ContentPlaceHolder1\$dls(..)\$ctl(\d\d)\$lnkbtnDownload", link)
+        suffix, count = match.groups()
+        suffix = suffix.upper()
+        suffix = suffix_map.get(suffix, suffix)
+        
+        if count == "00":
+            return suffix
+        else:
+            return suffix + "-" + count
         
     @disk_memoize("files/%(AffidavitsID)s-%(suffix)s.pdf")
     def _download_affidavit(self, AffidavitsID, suffix, formdata, target):
@@ -162,12 +186,17 @@ class Crawler(BaseCrawler):
         
     @disk_memoize("data/links.json")
     def get_links(self):
+        urls = [
+            "http://ceowestbengal.nic.in/",
+            "http://ceowestbengal.nic.in/FirstHyperLink.asp?m_menu_id=142"
+        ]
+        
+        links = [x for url in urls for x in self._get_links(url)]
         return [{"title": title, "filename": filename, "url": url} 
-                for title, filename, url in self._get_links()
+                for title, filename, url in links
                 if url.endswith(".pdf") or url.endswith(".jpg")]
         
-    def _get_links(self):
-        url = "http://ceowestbengal.nic.in/FirstHyperLink.asp?m_menu_id=142"        
+    def _get_links(self, url):
         soup = self.get_soup(url)
         links = soup.findAll("a")
         
@@ -177,6 +206,11 @@ class Crawler(BaseCrawler):
                 filename = re.sub(r"javascript:show_window\('./(mis_pdf/.*)'\)", r'\1', href)
                 url = "http://ceowestbengal.nic.in/" + filename
                 title = self.get_text(a)
+                yield title, filename, url
+            elif href.startswith("mis_pdf/election_2011/"):
+                title = self.get_text(a)
+                filename = href
+                url = "http://ceowestbengal.nic.in/" + href
                 yield title, filename, url
                 
     def download_expenditures(self):
@@ -192,16 +226,11 @@ class Crawler(BaseCrawler):
         formdata = dict((i['name'], i['value']) for i in inputs)
         
         post_links = [a for a in soup.findAll("a") if a['href'].startswith("javascript:__doPostBack")]
-        
-        try:
-            assert post_links[0]['href'] == "javascript:__doPostBack('ctl00$ContentPlaceHolder1$dlsCr$ctl00$lnkbtnDownload','')"
-            assert post_links[1]['href'] == "javascript:__doPostBack('ctl00$ContentPlaceHolder1$dlsSC$ctl00$lnkbtnDownload','')"
-            assert len(post_links) == 2
-        
-            self._download_expenditure(id, "abstract", formdata, "ctl00$ContentPlaceHolder1$dlsCr$ctl00$lnkbtnDownload")
-            self._download_expenditure(id, "affidavit", formdata, "ctl00$ContentPlaceHolder1$dlsSC$ctl00$lnkbtnDownload")
-        except Exception:
-            logger.error("failed to download expenditure docs", exc_info=True)
+
+        for link in post_links:
+            suffix = self.get_suffix_from_jslink(link['href'], suffix_map={"CR": "abstract", "SC": "affidavit"})
+            target = link['href'].split("'")[1]
+            self._download_affidavit(AffidavitsID, suffix, formdata, target)
             
     @disk_memoize("files/expediture/%(id)s-%(suffix)s.pdf")
     def _download_expenditure(self, id, suffix, formdata, target):
@@ -236,11 +265,10 @@ class Crawler(BaseCrawler):
                         "name": "Abstract Statement"
                     },
                     {
-                    "filename": "files/expenditure/%s-affidavit.pdf" % download_id,
+                        "filename": "files/expenditure/%s-affidavit.pdf" % download_id,
                         "name": "Affidavit on Accounts"
                     }
                 ]
-                
             }
     
         rows = table.findAll("tr")[1:] # skip header
@@ -253,7 +281,20 @@ def main():
     crawler = Crawler("data/AE-2011-WB")
     # crawler.get_candidates(1)    
     #print crawler.download_affidavits(76)
+    crawler.get_data()
     crawler.download_all()
+    
+class TestCrawler:
+    def setup_method(self, method):
+        self.crawler = Crawler("data/AE-2011-WB")
         
+    def test_get_suffix_from_jslink(self):
+        f = self.crawler.get_suffix_from_jslink
+    
+        assert f("javascript:__doPostBack('ctl00$ContentPlaceHolder1$dlsCr$ctl00$lnkbtnDownload','')") == "CR"
+        assert f("javascript:__doPostBack('ctl00$ContentPlaceHolder1$dlsSC$ctl00$lnkbtnDownload','')") == "SC"
+        assert f("javascript:__doPostBack('ctl00$ContentPlaceHolder1$dlsSC$ctl01$lnkbtnDownload','')") == "SC-01"
+        assert f("javascript:__doPostBack('ctl00$ContentPlaceHolder1$dlsSC$ctl01$lnkbtnDownload','')", {"SC": "Y"}) == "Y-01"
+
 if __name__ == '__main__':
     main()
