@@ -9,7 +9,7 @@ from base import BaseCrawler, disk_memoize
 logger = logging.getLogger("crawl")
 
 class Crawler(BaseCrawler):
-    url = "http://ceopondicherry.nic.in/AFFIDAVITS2011/puducherry.asp"
+    url = "http://www.ceopondicherry.nic.in/AFFIDAVITS2011/puducherry.asp"
     RE_CONSTITUENCY_NAME = re.compile(r"^(\d+) *[\.-] *([A-Za-z\. ]*) *(?:\(([A-Z]*)\))?$")
     
     @disk_memoize("data.json")
@@ -78,7 +78,7 @@ class Crawler(BaseCrawler):
         
     @disk_memoize("data/results.json")
     def get_results(self):
-        url = "http://ceopondicherry.nic.in/form20/form20.asp"
+        url = "http://www.ceopondicherry.nic.in/form20/form20.asp"
         soup = self.get_soup(url)
         
         def parse(a):
@@ -96,7 +96,7 @@ class Crawler(BaseCrawler):
         
     @disk_memoize("data/expenditure.json")
     def get_expenditures(self):
-        url = "http://ceopondicherry.nic.in/expenditure/2011/expend.asp"
+        url = "http://www.ceopondicherry.nic.in/expenditure/2011/expend.asp"
         soup = self.get_soup(url)
         table = soup.findAll("table")[-1] # requird data is in the last table
         rows = table.findAll("tr")
