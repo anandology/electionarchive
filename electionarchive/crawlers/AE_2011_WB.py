@@ -29,7 +29,7 @@ class Crawler(BaseCrawler):
         
     def download_all(self):
         for c in self.get_all_candidates():
-            logger.info("downloading affidavits of %s (%s)" % (c['name'], c['id']))
+            logger.info("downloading affidavits of %s (%s/%s)" % (c['name'], c['district_id'], c['id']))
             self.download_affidavits(c['affidavit_id'])
             
         self.download_links()
