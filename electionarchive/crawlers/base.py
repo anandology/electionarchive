@@ -1,12 +1,14 @@
 """Base Crawler
 """
 import os
+import re
 import urllib
 import urllib2
 import simplejson
 import logging
 import functools
 import inspect
+import htmlentitydefs
 
 from BeautifulSoup import BeautifulSoup
 from httpcache import CacheHandler, ThrottlingProcessor
@@ -117,6 +119,9 @@ class BaseCrawler:
         self.opener = urllib2.build_opener(
             CacheHandler(self.cache_dir), 
             ThrottlingProcessor(2))
+
+        self.nocache_opener = urllib2.build_opener(
+            ThrottlingProcessor(2))
             
         self.post_opener = urllib2.build_opener(
             ThrottlingProcessor(5))
@@ -125,12 +130,17 @@ class BaseCrawler:
         if not os.path.exists(path):
             os.makedirs(path)
 
-    def get(self, url, params=None):
+    def get(self, url, params=None, _cache=True):
         if params:
             url += "?" + urllib.urlencode(params)
+            
+        if _cache:
+            opener = self.opener
+        else:
+            opener = self.nocache_opener
         
         logger.info("GET %s", url)
-        return self.opener.open(url).read()
+        return opener.open(url).read()
         
     def post(self, url, params):
         if isinstance(params, dict):
@@ -158,11 +168,55 @@ class BaseCrawler:
     @disk_memoize("files/%(path)s")
     def _download(self, url, method, data, path):
         if method.upper() == "GET":
-            return self.get(url, data)
+            return self.get(url, data, _cache=False)
         else:
             return self.post(url, data)
             
     def get_text(self, e=None):
         """Returns content of BeautifulSoup element as text."""
-        return ''.join([c for c in e.recursiveChildGenerator() if isinstance(c, unicode)])
+        return ''.join([c for c in e.recursiveChildGenerator() if isinstance(c, unicode)]).strip()
+        
+    def unescape(self, text):
+        """Removes HTML or XML character references and entities from a text string.
+        
+        from Fredrik Lundh
+        http://effbot.org/zone/re-sub.htm#unescape-html
+        
+        @param text The HTML (or XML) source text.
+        @return The plain text, as a Unicode string, if necessary.
+        """
+        def fixup(m):
+            text = m.group(0)
+            if text[:2] == "&#":
+                # character reference
+                try:
+                    if text[:3] == "&#x":
+                        return unichr(int(text[3:-1], 16))
+                    else:
+                        return unichr(int(text[2:-1]))
+                except ValueError:
+                    pass
+            else:
+                # named entity
+                try:
+                    text = unichr(htmlentitydefs.name2codepoint[text[1:-1]])
+                except KeyError:
+                    pass
+            return text # leave as is
+        return re.sub("&#?\w+;", fixup, text)
+        
+    def trim(self, s):
+        """Replaces multiple spaces with single space and remove whitespace at both the ends.
+        """
+        return re.sub("\s+", " ", s).strip()
     
+    def parse_link(self, a, base_url=None):
+        """Parses the link node of BeautifulSoup and returns title and url.
+        
+        If base_url is provided, the url is converted to absolute url with base_url as base.
+        """
+        title = self.unescape(self.get_text(a)).strip()
+        url = a['href']
+        if base_url:
+            url = urllib.basejoin(base_url, url)
+        return title, url
