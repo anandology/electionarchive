@@ -68,11 +68,11 @@ class Crawler(BaseCrawler):
             "affidavits": [{
                 "name": "Assets & Liabilities",
                 "url": cell4_url,
-                "filename": "files/" + cell4_url[len("http://"):]
+                "filename": "files/" + cell4_url[len("http://"):].replace("\\", "-")
             }, {
                 "name": "Criminal Records",
                 "url": cell5_url,
-                "filename": "files/" + cell5_url[len("http://"):]
+                "filename": "files/" + cell5_url[len("http://"):].replace("\\", "-")
             }]
         }
         
