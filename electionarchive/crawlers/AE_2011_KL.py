@@ -36,7 +36,8 @@ class Crawler(BaseCrawler):
         return d
         
     def download_files(self):
-        pass
+        for filename, url in self.get_files_to_download():
+            self.download(url, path=filename)
     
     def get_files_to_download(self):
         """Returns an iterator over (filename, url) for all downloadable urls.
@@ -125,6 +126,7 @@ def main():
     
     crawler = Crawler("data/AE-2011-KL")
     crawler.get_data()
+    crawler.download_files()
         
 if __name__ == '__main__':
     main()
