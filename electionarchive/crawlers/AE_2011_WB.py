@@ -142,7 +142,10 @@ class Crawler(BaseCrawler):
         for link in post_links:
             suffix = self.get_suffix_from_jslink(link['href'])
             target = link['href'].split("'")[1]
-            self._download_affidavit(AffidavitsID, suffix, formdata, target)
+            try:
+                self._download_affidavit(AffidavitsID, suffix, formdata, target)
+            except Exception:
+                logger.error("failed to download files/%s-%s.pdf", AffidavitsID, suffix, exc_info=True)
             
     def get_suffix_from_jslink(self, link, suffix_map={}):
         """Returns file suffix from href.
