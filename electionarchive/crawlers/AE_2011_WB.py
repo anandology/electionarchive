@@ -233,7 +233,7 @@ class Crawler(BaseCrawler):
         for link in post_links:
             suffix = self.get_suffix_from_jslink(link['href'], suffix_map={"CR": "abstract", "SC": "affidavit"})
             target = link['href'].split("'")[1]
-            self._download_affidavit(AffidavitsID, suffix, formdata, target)
+            self._download_expenditure(id, suffix, formdata, target)
             
     @disk_memoize("files/expediture/%(id)s-%(suffix)s.pdf")
     def _download_expenditure(self, id, suffix, formdata, target):
