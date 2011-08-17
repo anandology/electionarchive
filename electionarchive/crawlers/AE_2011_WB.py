@@ -243,7 +243,7 @@ class Crawler(BaseCrawler):
         return self.post(url, data)            
                 
     def get_expenditure_monitoring(self):
-        return [self.get_expenditure_for_ac(c['id']) for c in list(self.get_all_constituencies())[:5]]
+        return [self.get_expenditure_for_ac(c['id']) for c in list(self.get_all_constituencies())]
         
     @disk_memoize("data/expenditure/%(acid)s.json")
     def get_expenditure_for_ac(self, acid):
