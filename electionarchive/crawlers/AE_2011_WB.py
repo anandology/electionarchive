@@ -233,7 +233,10 @@ class Crawler(BaseCrawler):
         for link in post_links:
             suffix = self.get_suffix_from_jslink(link['href'], suffix_map={"CR": "abstract", "SC": "affidavit"})
             target = link['href'].split("'")[1]
-            self._download_expenditure(id, suffix, formdata, target)
+            try:
+                self._download_expenditure(id, suffix, formdata, target)
+            except IOError:
+                logger.error("Downloading expediture failed", exc_info=True)
             
     @disk_memoize("files/expediture/%(id)s-%(suffix)s.pdf")
     def _download_expenditure(self, id, suffix, formdata, target):
